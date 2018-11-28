@@ -1,0 +1,73 @@
+<style lang="less">
+	.page{
+		width: 100%;
+		height:100%;
+		background: #f4f4f4;
+		.title{
+			width: 100%;
+			height:80rpx;
+			background: #FBFEFB;
+			display: flex;
+			position: fixed;
+			top:0;
+			left:0;
+			z-index: 100;
+			>view{
+				flex:1;
+				text-align: center;
+				line-height: 80rpx;
+				font-size: 35rpx;
+				&.active{
+					color:#31C27C;
+					border-bottom: 8rpx solid #31C27C;
+					box-sizing: border-box;
+				}
+			}
+		}
+	}
+</style>
+<template>
+	<view class="page" id="page">
+		<view class="title">
+			<view wx:for="{{title}}" wx:key="{{index}}" @tap="tabIndexItem('{{index}}')" class="{{ind===index? 'active':''}}">
+				{{item}}
+			</view>
+		</view>
+		<Recommend hidden="{{ind !== 0}}"></Recommend>
+		<Lists hidden="{{ind !== 1}}"></Lists>
+		<search hidden="{{ind !== 2}}"></search>
+	</view>
+</template>
+
+<script>
+	import wepy from 'wepy';
+	import Recommend from '../components/recommend'
+	import Lists from '../components/lists'
+	import Search from '../components/search'
+  	export default class Index extends wepy.page {
+		config = {
+			onReachBottomDistance:20
+        }
+		components = {
+			Recommend,
+			Lists,
+			search:Search
+		}
+		data = {
+			ind:0,
+			title:['推荐','排行榜','搜索']
+		}
+		methods = {
+			tabIndexItem(index){
+				this.ind = index;
+				this.$apply()
+				if(index === 1){
+					this.$broadcast('getListsData')
+				}else if(index === 2){
+					this.$broadcast('setSearchData')
+				}
+			}
+		}
+	}
+    
+</script>

@@ -1,0 +1,19 @@
+<style lang="less">
+    
+</style>
+<template>
+    <web-view src="{{url}}"></web-view>
+</template>
+<script>
+    import wepy from 'wepy';
+    export default class Hotkey extends wepy.page {
+        onLoad(option){
+            console.log(option)
+            this.url = option.url;
+            this.$apply();
+        }
+        data = {
+            url:""
+        }
+    }
+</script>

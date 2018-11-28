@@ -1,0 +1,95 @@
+<style lang="less">
+    .list{
+        width: 100%;
+        box-sizing: border-box;
+        padding:10rpx 20rpx;
+        background: #f4f4f4;
+        margin-top: 80rpx;
+        >view{
+            width: 100%;
+            box-sizing: border-box;
+            padding:10rpx 0;
+            height:180rpx;
+            .topList_item{
+                height:100%;
+                width: 100%;
+                display: flex;
+                background: #fff;
+                overflow: hidden;
+                image{
+                    width: 160rpx;
+                    flex-shrink: 0;
+                }
+                .songList{
+                    box-sizing: border-box;
+                    padding-left:30rpx;
+                }
+                .topTitle{
+                    font-size: 32rpx;
+                }
+                .song_info{
+                    height:38rpx;
+                    width: 100%;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    line-height: 38rpx;
+                    .show_song,.song_name{
+                        padding:0 10rpx;
+                    }
+                    .song_name{
+                        color:#222;
+                    }
+                }
+                text{
+                    font-size: 24rpx;
+                    color:rgba(0,0,0,.5);
+                }
+            }
+        }
+    }
+</style>
+<template>
+    <view class="list">
+        <view wx:for="{{list.topList}}" wx:key="{{index}}">
+            <view class="topList_item">
+                <image src="{{item.picUrl}}" mode="widthFix" />
+                <view class="songList">
+                    <view class="topTitle">{{item.topTitle}}</view>
+                    <view wx:for="{{item.songList}}" wx:key="{{index}}" class="song_info">
+                        <text class="show_song">{{index+1}}</text>
+                        <text class="song_name">{{item.songname}}</text>
+                        <text class="songer">-{{item.singername}}</text>
+                    </view>
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
+<script>
+
+    import wepy from 'wepy'; 
+    import { connect } from 'wepy-redux'
+    import { getListData }  from '../api/indexApi';
+    import { LIST_DATA } from '../store/types'
+    @connect({
+        list(state){
+            return state.counter.list
+        }
+    },{
+        LIST_DATA
+    })
+    
+
+    export default class Lists extends wepy.component {
+        events = {
+            getListsData(){
+                if( Object.keys(this.list).length===0 ){
+                    getListData((res) => {
+                        this.methods.LIST_DATA(res.data.data)
+                    })
+                }
+            }
+        }
+    }
+</script>

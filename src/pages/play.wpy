@@ -1,0 +1,73 @@
+<style lang="less">
+    
+</style>
+<template>
+    <view>plays</view>
+</template>
+<script>
+    import wepy from 'wepy';
+    import { getAlbumInfo,getSongInfo,getSongVkey } from '../api/indexApi'
+    export default class Play extends wepy.page {
+        onLoad(option){
+            let songObj = JSON.parse(option.songinfo);
+            this.playInfo = songObj;
+            this.albummid = songObj.album.mid
+            this.$apply();
+        }
+        data = {
+            playInfo:{},
+            albummid:"",
+            album:{},
+            pageInfo:{},
+            songUrl:""
+        }
+        onShow(){
+            getAlbumInfo(this.albummid,(res)=>{
+                this.album = res.data.data;
+                getSongInfo(this.playInfo.id,(res) => {
+                    this.pageInfo = res.data;
+                    console.log(this.pageInfo)
+                    console.log(this.playInfo)
+                    console.log(this.album)
+                    getSongVkey(this.playInfo.mid,(res)=>{
+                        let url = `http://dl.stream.qqmusic.qq.com/C400${res.data.data.items[0].songmid}.m4a?vkey=${res.data.data.items[0].vkey}&guid=3655047200&fromtag=66`
+                        this.songUrl = url;
+                        this.methods.createPlayer(this,url)
+                    })
+                })
+                this.$apply();
+            })
+        }
+        methods = {
+            createPlayer(that,url){
+                let BackgroundAudioManager = wx.getBackgroundAudioManager();
+                console.log(url)
+                BackgroundAudioManager.src = url;
+                BackgroundAudioManager.startTime = 0;
+                BackgroundAudioManager.title = that.pageInfo.detail.data.extras.name;
+                BackgroundAudioManager.epname = that.pageInfo.detail.data.track_info.album.name;
+                BackgroundAudioManager.singer = that.pageInfo.detail.data.track_info.singer[0].name;
+                BackgroundAudioManager.onError((err) => {
+                    console.log(err)
+                })
+                // BackgroundAudioManager.singer = that.pageInfo.detail.data.track_info.singer[0].name;
+                // const backgroundAudioManager = wx.getBackgroundAudioManager()
+
+                // backgroundAudioManager.title = '此时此刻'
+                // backgroundAudioManager.epname = '此时此刻'
+                // backgroundAudioManager.singer = '许巍'
+                // backgroundAudioManager.coverImgUrl = 'http://y.gtimg.cn/music/photo_new/T002R300x300M000003rsKF44GyaSk.jpg?max_age=2592000'
+                // // 设置了 src 之后会自动播放
+                // backgroundAudioManager.src = 'http://ws.stream.qqmusic.qq.com/M500001VfvsJ21xFqb.mp3?guid=ffffffff82def4af4b12b3cd9337d5e7&uin=346897220&vkey=CF395A8C707B7C91DF5DFD4B32C4A2A998CAC83BE1D553A855DFF2E9EFC3BB0D0B1370F08D68B776E4E265561CE4234F9220C3FE36D1547A&fromtag=46'
+            }
+        }
+    }
+
+
+
+//http://dl.stream.qqmusic.qq.com/C400000TIBdC0xuRPc.m4a?vkey=CF395A8C707B7C91DF5DFD4B32C4A2A998CAC83BE1D553A855DFF2E9EFC3BB0D0B1370F08D68B776E4E265561CE4234F9220C3FE36D1547A&guid=3655047200&fromtag=66
+
+    //http://dl.stream.qqmusic.qq.com/C400000TIBdC0xuRPc.m4a?
+// vkey=939767DE4AD8B07328CB7CF5A66CFE0086429EA4F86D5EF47E97759D90B398E2E3292EE5187C34E0CD0D242E02AEB6580B856D4D64927949&guid=3655047200&fromtag=66
+</script>
+

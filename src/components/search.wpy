@@ -1,0 +1,199 @@
+<style lang="less">
+    .search_bg{
+        padding-top: 80rpx;
+        .search{
+            box-sizing: border-box;
+            padding:20rpx 100rpx 20rpx 20rpx;
+            background: #f4f4f4;
+            height:120rpx;
+            width: 100%;
+            position: relative;
+            input{
+                background: rgba(255,255,255,0.7);
+                height:80rpx;
+                padding-left:80rpx;
+                border-radius: 16rpx;
+                color:rgba(102, 102, 102, 0.5);
+                font-size: 33rpx;
+            }
+            icon{
+                color:rgba(218, 218, 218, 0.5);
+                position: absolute;
+                top:40rpx;
+                left:35rpx;
+            }
+            .cancle{
+                font-size: 30rpx;
+                position: absolute;
+                top:40rpx;
+                right:30rpx;
+                color:rgba(102, 102, 102, 0.5);
+            }
+            .placeholder{
+                font-size: 30rpx;
+                color:rgba(218, 218, 218, 0.8);
+            }
+        }
+        .keyword{
+            width: 100%;
+            box-sizing: border-box;
+            padding:30rpx;
+            display: flex;
+            flex-wrap: wrap;
+            >view{
+                padding:15rpx;
+                font-size: 30rpx;
+                border:1px solid rgba(0,0,0,.6);
+                border-radius: 50rpx;
+                margin-bottom: 30rpx;
+                margin-right: 30rpx;
+                &:nth-child(1){
+                    color: #fc4524;
+                    border-color: #fc4524;
+                }
+            }
+        }
+        .loading{
+            width: 100%;
+            box-sizing: border-box;
+            padding:10rpx;
+            font-size: 30rpx;
+            text-align: center;
+            color:rgb(212, 212, 212);
+            background: #fff;
+        }
+    }
+    
+</style>
+<template>
+    <view class="search_bg" id="search_bg">
+        <view class="search" id="search">
+            <input value="{{searchInfo}}" type="text" placeholder="搜索歌曲、歌单、专辑" placeholder-class="placeholder"
+              maxlength="30" @input="searchSong" @confirm="selectInfo('{{searchInfo}}')" /> 
+            <text class="cancle" @tap="cancleSearch">取消</text>
+            <icon type="search" size="18"></icon>
+        </view>
+        <scroll-view scroll-y scroll-with-animation style="height:{{bgHeight-searchHeight-35}}px" @scrolltolower="selectInfo('{{searchInfo}}')">
+            <view class="keyword" wx:if="{{showSearch}}">
+                <view @tap="goWebView('{{search.special_url}}')">{{search.special_key}}</view>
+                <view wx:for="{{hot}}" wx:key="{{index}}" @tap="selectInfo('{{item.k}}')">
+                    {{item.k}}
+                </view>
+            </view>
+            <SearchList hidden="{{showSearch}}" :searchSongList.sync="SearchLists"></SearchList>
+            <view class="loading" hidden="{{showSearch}}">{{more}}</view>
+        </scroll-view>
+        
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'; 
+    import { connect } from 'wepy-redux'
+    import { getSearchData,getSearchListData } from '../api/indexApi'
+    import { SEARCH_DATA } from '../store/types'
+    import SearchList from './searchlist'
+    @connect({
+        search(state){
+            return state.counter.search
+        }
+    },{
+        SEARCH_DATA
+    })
+    export default class Search extends wepy.component {
+        onLoad(){
+            
+        }
+        data = {
+            searchInfo:"",
+            hot:[],
+            p:0,
+            n:20,
+            showSearch:true,
+            SearchLists:[],
+            searchHeight:0,
+            bgHeight:0,
+            isRequest:true,
+            more:"正在加载更多...",
+            sure:true
+        }
+        events = {
+            setSearchData(){
+                let that = this;
+                if( Object.keys(this.search).length===0 ){
+                    getSearchData((res) => {
+                        this.methods.SEARCH_DATA(res.data.data)
+                        this.methods.filterHotArr(this,res.data.data.hotkey)
+                    })
+                }
+                const query = wx.createSelectorQuery()
+                query.select('#search').boundingClientRect()
+                query.select('#page').boundingClientRect()
+                query.exec(function(res){
+                    that.searchHeight = res[0].height
+                    that.bgHeight = res[1].height
+                    that.$apply();
+                })
+            }
+        }
+        methods = {
+            goWebView(url){
+                wepy.navigateTo({
+                    url: '/pages/hotkey?url='+url
+                });  
+            },
+            filterHotArr(that,arr){
+                let num = Math.floor(Math.random()*(arr.length-8))
+                let hotArr = arr.slice(num,num+8)
+                that.hot = hotArr;
+                that.$apply();
+            },
+            cancleSearch(){
+                this.searchInfo = "";
+                this.showSearch = true;
+                this.p = 0;
+                this.isRequest = true;
+                this.SearchLists = []
+                this.$apply();
+            },
+            searchSong(e){
+                this.searchInfo = e.detail.value;
+                if( !this.sure ){
+                    this.sure = !this.sure;
+                }
+                this.$apply()
+            },
+            selectInfo(name,e){
+                if( e.detail.value ){
+                    if( this.sure ){
+                        this.p = 0;
+                        this.isRequest = true;
+                        this.SearchLists = [];
+                        this.sure = !this.sure;
+                    }
+                }
+                wx.showLoading({
+                    title:"加载中"
+                })
+                this.searchInfo = name;
+                this.showSearch = false;
+                if( this.isRequest ){
+                    getSearchListData(this.searchInfo,20,this.p,(res) => {
+                        wx.hideLoading()
+                        if(res.data.data.song.curnum !== 0){
+                            this.p = this.p + 1;
+                            this.SearchLists = this.SearchLists.concat(res.data.data.song.list);
+                        }else{
+                            this.isRequest = false
+                            this.more = "已经全部加载"
+                        }
+                        this.$apply()
+                    })
+                }
+                this.$apply()
+            }
+        }
+        components = {
+            SearchList
+        }
+    }
+</script>

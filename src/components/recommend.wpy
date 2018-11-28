@@ -1,0 +1,93 @@
+<style lang="less">
+	.recommend{
+		width: 100%;
+		padding-top: 80rpx;
+		background: #f4f4f4;
+	}
+    .banner_img{
+		width: 100%;
+	}
+	swiper{
+		height:300rpx;
+	}
+	.radio{
+		width: 100%;
+		>text{
+			line-height: 70rpx;
+			font-size: 33rpx;
+			padding:15rpx;
+		}
+		.radio_item{
+			width: 100%;
+			display: flex;
+			box-sizing: border-box;
+			padding:0 7.5rpx;
+			>view{
+				width: 50%;
+				box-sizing: border-box;
+				padding:0 7.5rpx;
+				
+				image{
+					width: 100%;
+					display: block;
+				}
+				>view{
+					background: #fff;
+					line-height: 70rpx;
+					font-size: 30rpx;
+				}
+			}
+		}	
+	}
+</style>
+<template>
+    <view class="recommend">
+        <swiper indicator-dots="{{indicatorDots}}"
+		autoplay="{{autoplay}}" interval="{{interval}}" duration="{{duration}}">
+			<block wx:for="{{recommend.slider}}" wx:key="{{index}}">
+				<swiper-item>
+					<image src="{{item.picUrl}}" mode="widthFix" class="banner_img"/>
+				</swiper-item>
+			</block>
+		</swiper>
+		<view class="radio">
+			<text>电台</text>
+			<view class="radio_item">
+				<view wx:for="{{recommend.radioList}}" wx:key="{{item.radioid}}">
+					<image src="{{item.picUrl}}" mode="widthFix"/>
+					<view>{{item.Ftitle}}</view>
+				</view>
+			</view>
+		</view>
+		
+    </view>
+</template>
+<script>
+    import wepy from 'wepy';
+    import { connect } from 'wepy-redux'
+	import { getIndexData }  from '../api/indexApi';
+	import { RECOMMEND_DATA } from '../store/types'
+	@connect({
+		recommend(state){
+			return state.counter.recommend
+		}
+	},{
+		RECOMMEND_DATA
+    })
+    
+    export default class Index extends wepy.component {
+		data = {
+			autoplay:true,
+			indicatorDots:true,
+			duration:500,
+			interval:3000,
+		}
+		onLoad(){
+			if(Object.keys(this.recommend).length === 0){
+				getIndexData((res) => {
+					this.methods.RECOMMEND_DATA(res.data.data)
+				})
+			}
+		}
+	}
+</script>
